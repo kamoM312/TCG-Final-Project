@@ -114,6 +114,41 @@ app.post("/search", async (req, res) => {
     });
 
 // login user 
+  app.post('/login', async (req, res) => {
+        const {email, password} = req.body; 
+        let user = "";
+
+         if (!email || email.trim().length === 0) {
+    return res.status(400).json({ message: "Email cannot be empty!" });
+  }
+
+  if (!password || password.trim().length === 0) {
+    return res.status(400).json({ message: "Password cannot be empty!" });
+  }
+
+        const hashed = await hashPassword(password);
+
+        try {
+            const result = await dbPool.query(`SELECT BIN_TO_UUID(uid) AS uid, password FROM Users WHERE email = '${email}';`);
+            console.log(result)
+            const user = result[0][0].uid;
+            const dbPassword = result[0][0].password;
+            const isMatch = await verifyPassword(password, dbPassword);
+            console.log("Password matches:", isMatch);
+
+            if(isMatch === true){
+                // res.redirect(`/users/${user}`); 
+                console.log(user)
+                res.json(user)
+            } else {
+                return res.status(400).json({ message: "Invalid Email and/or Password combination" });
+            }
+            
+        } catch (error) {
+            console.log(`Invalid Email and/or Password combination `+error);
+            return res.status(500).json({ error: "Server error. Please try again later." });
+        }
+    })
 
 // register admin 
   app.post('/admin/register', async (req, res) => {
@@ -168,6 +203,42 @@ app.post("/search", async (req, res) => {
     });
 
 // login admin 
+app.post('/admin/login', async (req, res) => {
+        const {email, password} = req.body; 
+        let user = "";
+
+         if (!email || email.trim().length === 0) {
+    return res.status(400).json({ message: "Email cannot be empty!" });
+  }
+
+  if (!password || password.trim().length === 0) {
+    return res.status(400).json({ message: "Password cannot be empty!" });
+  }
+
+        const hashed = await hashPassword(password);
+
+        try {
+            const result = await dbPool.query(`SELECT BIN_TO_UUID(uid) AS uid, password FROM admins WHERE email = '${email}';`);
+            console.log(result)
+            const user = result[0][0].uid;
+            const dbPassword = result[0][0].password;
+            const isMatch = await verifyPassword(password, dbPassword);
+            console.log("Password matches:", isMatch);
+
+            if(isMatch === true){
+                // res.redirect(`/users/${user}`); 
+                console.log(user)
+                res.json(user)
+            } else {
+                return res.status(400).json({ message: "Invalid Email and/or Password combination" });
+            }
+            
+        } catch (error) {
+            console.log(`Invalid Email and/or Password combination `+error);
+            return res.status(500).json({ error: "Server error. Please try again later." });
+        }
+    })
+
 
 app.listen(PORT, () => {
     console.log(`Server connected on port: ${PORT}!`);
