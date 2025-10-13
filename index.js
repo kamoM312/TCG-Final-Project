@@ -234,15 +234,43 @@ app.post('/admin/login', async (req, res) => {
     // view personal word bank 
     app.get(`/:uid`, async (req, res) => {
       try {
-        const results = await db.query(`SELECT * FROM Wordbank;`);
+        const id = await db.query(`SELECT id FROM Users = BIN_TO_UUID(?);`,
+          [uid]
+        );
+         try {
+        const results = await db.query(`SELECT Wordbank.* FROM Wordbank JOIN user_wordbank ON Wordbank.id = user_wordbank.word_id WHERE user_wordbank.user_id = ?;`,
+          [id]
+        );
         res.json(results);
       } catch {
         console.error('Error retrieving wordbank:', error);
         res.status(500).send('Error retrieving wordbank.');
       }
+      } catch {
+        console.error('Error retrieving user details:', error);
+        res.status(500).send('Error retrieving user details.');
+      }
+     
     });
 
     // add item to personal word bank from search
+    app.post(`/:uid/add`, async (req, res) => {
+      const uid = req.params.uid;
+      const { word, definition, pronunciation, example } = req.body;
+
+      try {
+        await db.query(`INSERT INTO Wordbank (word, definition, pronunciation, example) VALUES (?,?,?,?) ON DUPLICATE KEY UPDATE id=LAST_INSERT_ID(id);`,
+          [word, definition, pronunciation, example]
+        );
+
+        await db.query(`INSERT INTO user_wordbank (user_id, wordbank_id) VALUES (?, LAST_INSERT_ID());`,
+          [uid]
+        );
+      } catch {
+        console.error(`Error adding word to personal wordbank.`);
+        res.status(500).send(`Error adding word to personal wordbank.`)
+      }
+    })
 
     // add item to personal word bank from main word bank
 
