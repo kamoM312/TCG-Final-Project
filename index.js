@@ -40,69 +40,6 @@ app.get("/", async (req, res) => {
   console.log(response.text);
 })
 
-// get word of the day 
-app.get("/random", async (req, res) => {
-    const word = req.body.word;
-    const response = await ai.models.generateContent({
-    model: "gemini-2.5-flash",
-    contents: `Pick a completely random english word from the oxford dictionary. Provide a definition, pronunciation and usage example for the word.`,
-    config: {
-    responseMimeType: "application/json",
-    responseSchema: {
-      type: Type.ARRAY,
-      items: {
-        type: Type.OBJECT,
-       properties: {
-              word: { type: Type.STRING },
-              definition: { type: Type.STRING },
-              pronunciation: { type: Type.STRING },
-              example: { type: Type.STRING },
-            },
-      
-        propertyOrdering: ["word", "definition", "pronunciation", "example",]
-      },
-    },
-  },
-  });
-  // console.log(response.text);
-  const cleanData = JSON.parse(response.text);
-
-    // Send the real object to client
-    res.json(cleanData);
-})
-
-// search for word
-app.post("/search", async (req, res) => {
-    const word = req.body.word;
-    console.log(`Search for: ${word}`)
-    const response = await ai.models.generateContent({
-    model: "gemini-2.5-flash",
-    contents: `Provide a definition, pronunciation, and usage example for the word '${word}'. `,
-    config: {
-    responseMimeType: "application/json",
-    responseSchema: {
-      type: Type.ARRAY,
-      items: {
-        type: Type.OBJECT,
-       properties: {
-              word: { type: Type.STRING },
-              definition: { type: Type.STRING },
-              pronunciation: { type: Type.STRING },
-              example: { type: Type.STRING },
-            },
-      
-        propertyOrdering: ["word", "definition", "pronunciation", "example",]
-      },
-    },
-  },
-  });
-  // console.log(response.text);
-  const cleanData = JSON.parse(response.text);
-
-    // Send the real object to client
-    res.json(cleanData);
-})
-
 // register user 
 
     app.post('/register', async (req, res) => {
@@ -284,12 +221,111 @@ app.post('/admin/login', async (req, res) => {
 
     // user 
     // view word bank
+    app.get(`/:uid/wordbank`, async (req, res) => {
+      try {
+        const results = await db.query(`SELECT * FROM Wordbank;`);
+        res.json(results);
+      } catch {
+        console.error('Error retrieving wordbank:', error);
+        res.status(500).send('Error retrieving wordbank.');
+      }
+    });
 
-    // add item to word bank 
+    // view personal word bank 
+    app.get(`/:uid`, async (req, res) => {
+      try {
+        const results = await db.query(`SELECT * FROM Wordbank;`);
+        res.json(results);
+      } catch {
+        console.error('Error retrieving wordbank:', error);
+        res.status(500).send('Error retrieving wordbank.');
+      }
+    });
 
-    // remove item from word bank
+    // add item to personal word bank from search
 
-    // remove all items from word bank 
+    // add item to personal word bank from main word bank
+
+    // remove item from personal word bank
+
+    // remove all items from personal word bank 
+
+    // delete account 
+    app.post(`/:uid/delete`, async (req, res) => {
+      const uid = req.body.uid;
+      try {
+      await db.query(`DELETE FROM Users WHERE uid=?;`,
+        [uid]
+      );
+      res.status(200).send('Succesfully deleted user.');
+    } catch {
+      console.error('Error deleting user:', error);
+      res.status(500).send('Error deleting user.');
+    }
+    });
+
+    // search for word
+app.post("/:uid/search", async (req, res) => {
+    const word = req.body.word;
+    console.log(`Search for: ${word}`)
+    const response = await ai.models.generateContent({
+    model: "gemini-2.5-flash",
+    contents: `Provide a definition, pronunciation, and usage example for the word '${word}'. `,
+    config: {
+    responseMimeType: "application/json",
+    responseSchema: {
+      type: Type.ARRAY,
+      items: {
+        type: Type.OBJECT,
+       properties: {
+              word: { type: Type.STRING },
+              definition: { type: Type.STRING },
+              pronunciation: { type: Type.STRING },
+              example: { type: Type.STRING },
+            },
+      
+        propertyOrdering: ["word", "definition", "pronunciation", "example",]
+      },
+    },
+  },
+  });
+  // console.log(response.text);
+  const cleanData = JSON.parse(response.text);
+
+    // Send the real object to client
+    res.json(cleanData);
+})
+
+// get word of the day 
+app.get("/:uid/random", async (req, res) => {
+    const word = req.body.word;
+    const response = await ai.models.generateContent({
+    model: "gemini-2.5-flash",
+    contents: `Pick a completely random english word from the oxford dictionary. Provide a definition, pronunciation and usage example for the word.`,
+    config: {
+    responseMimeType: "application/json",
+    responseSchema: {
+      type: Type.ARRAY,
+      items: {
+        type: Type.OBJECT,
+       properties: {
+              word: { type: Type.STRING },
+              definition: { type: Type.STRING },
+              pronunciation: { type: Type.STRING },
+              example: { type: Type.STRING },
+            },
+      
+        propertyOrdering: ["word", "definition", "pronunciation", "example",]
+      },
+    },
+  },
+  });
+  // console.log(response.text);
+  const cleanData = JSON.parse(response.text);
+
+    // Send the real object to client
+    res.json(cleanData);
+});
 
 
     // admin 
@@ -297,10 +333,23 @@ app.post('/admin/login', async (req, res) => {
     app.get(`/admin/users`, async (req, res) => {
       const users = await db.query(`SELECT BIN_TO_UUID(uid) AS uid, full_name, email FROM Users`);
       console.log(users);
+      res.json(users);
     })
 
 
     // remove user 
+    app.post(`/admin/delete/:uid`, async (req, res) => {
+      const uid = req.body.uid;
+      try {
+      await db.query(`DELETE FROM Users WHERE uid=?`,
+        [uid]
+      );
+      res.status(200).send('Succesfully deleted user.');
+    } catch {
+      console.error('Error deleting user:', error);
+      rs.status(500).send('Error deleting user.');
+    }
+    });
 
     // reset user password 
 
