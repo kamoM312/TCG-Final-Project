@@ -42,11 +42,33 @@ app.get("/", async (req, res) => {
 
 // get word of the day 
 app.get("/random", async (req, res) => {
+    const word = req.body.word;
     const response = await ai.models.generateContent({
     model: "gemini-2.5-flash",
-    contents: "Provide a completely random english word with a definition, pronunciation, and usage example. Turn this into a json response, object, attributes: definition, pronunciation, example",
+    contents: `Pick a completely random english word from the oxford dictionary. Provide a definition, pronunciation and usage example for the word.`,
+    config: {
+    responseMimeType: "application/json",
+    responseSchema: {
+      type: Type.ARRAY,
+      items: {
+        type: Type.OBJECT,
+       properties: {
+              word: { type: Type.STRING },
+              definition: { type: Type.STRING },
+              pronunciation: { type: Type.STRING },
+              example: { type: Type.STRING },
+            },
+      
+        propertyOrdering: ["word", "definition", "pronunciation", "example",]
+      },
+    },
+  },
   });
-  console.log(response.text);
+  // console.log(response.text);
+  const cleanData = JSON.parse(response.text);
+
+    // Send the real object to client
+    res.json(cleanData);
 })
 
 // search for word
