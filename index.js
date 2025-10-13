@@ -1,6 +1,6 @@
 import express from "express";
 import bodyParser from "body-parser";
-import { GoogleGenAI } from "@google/genai";
+import { GoogleGenAI, Type } from "@google/genai";
 import dotenv from 'dotenv';
 import dbPool from './db.js'; // Import the connection pool
 import { v4 as uuidv4, parse as uuidParse } from 'uuid';
@@ -55,9 +55,30 @@ app.post("/search", async (req, res) => {
     console.log(`Search for: ${word}`)
     const response = await ai.models.generateContent({
     model: "gemini-2.5-flash",
-    contents: `Provide a definition, pronunciation, and usage example for the word '${word}'. Turn this into a json response, object, attributes: definition, pronunciation, example`,
+    contents: `Provide a definition, pronunciation, and usage example for the word '${word}'. `,
+    config: {
+    responseMimeType: "application/json",
+    responseSchema: {
+      type: Type.ARRAY,
+      items: {
+        type: Type.OBJECT,
+       properties: {
+              word: { type: Type.STRING },
+              definition: { type: Type.STRING },
+              pronunciation: { type: Type.STRING },
+              example: { type: Type.STRING },
+            },
+      
+        propertyOrdering: ["word", "definition", "pronunciation", "example",]
+      },
+    },
+  },
   });
-  console.log(response.text);
+  // console.log(response.text);
+  const cleanData = JSON.parse(response.text);
+
+    // Send the real object to client
+    res.json(cleanData);
 })
 
 // register user 
@@ -238,6 +259,30 @@ app.post('/admin/login', async (req, res) => {
             return res.status(500).json({ error: "Server error. Please try again later." });
         }
     })
+
+    // user 
+    // view word bank
+
+    // add item to word bank 
+
+    // remove item from word bank
+
+    // remove all items from word bank 
+
+
+    // admin 
+    // view users 
+    app.get(`/admin/users`, async (req, res) => {
+      const users = await db.query(`SELECT BIN_TO_UUID(uid) AS uid, full_name, email FROM Users`);
+      console.log(users);
+    })
+
+
+    // remove user 
+
+    // reset user password 
+
+    // edit word bank item 
 
 
 app.listen(PORT, () => {
