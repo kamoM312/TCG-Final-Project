@@ -299,8 +299,66 @@ app.post('/admin/login', async (req, res) => {
     // add item to personal word bank from main word bank
 
     // remove item from personal word bank
+        app.post("/:uid/delete-word", async (req, res) => {
+  const uid = req.params.uid;
+  const wordId = req.body.wordId;
 
-    // remove all items from personal word bank 
+  const conn = await dbPool.getConnection(); // mysql2/promise
+  try {
+    await conn.beginTransaction();
+
+    // Find the user’s numeric id
+    const [rows] = await conn.query(`SELECT id FROM Users WHERE uid = ${uid};`);
+    if (!rows || rows.length === 0) {
+      await conn.rollback();
+      return res.status(404).send("User not found.");
+    }
+    const userId = rows[0].id;
+
+    // Delete all words linked to this user
+    await conn.query(`DELETE FROM user_wordbank WHERE user_id = ? AND wordbank_id = ?;`, [userId, wordId]);
+
+    await conn.commit();
+    res.status(200).send("Successfully removed word from user's wordbank.");
+  } catch (error) {
+    await conn.rollback().catch(() => {});
+    console.error("Error clearing user's wordbank:", error.message);
+    res.status(500).send("Error clearing user's wordbank.");
+  } finally {
+    conn.release();
+  }
+});
+
+    // remove all items from personal word bank
+    app.post("/:uid/clear", async (req, res) => {
+  const uid = req.params.uid;
+
+  const conn = await dbPool.getConnection(); // mysql2/promise
+  try {
+    await conn.beginTransaction();
+
+    // Find the user’s numeric id
+    const [rows] = await conn.query(`SELECT id FROM Users WHERE uid = ${uid};`);
+    if (!rows || rows.length === 0) {
+      await conn.rollback();
+      return res.status(404).send("User not found.");
+    }
+    const userId = rows[0].id;
+
+    // Delete all words linked to this user
+    await conn.query(`DELETE FROM user_wordbank WHERE user_id = ?;`, [userId]);
+
+    await conn.commit();
+    res.status(200).send("Successfully cleared user's wordbank without deleting the user.");
+  } catch (error) {
+    await conn.rollback().catch(() => {});
+    console.error("Error clearing user's wordbank:", error.message);
+    res.status(500).send("Error clearing user's wordbank.");
+  } finally {
+    conn.release();
+  }
+});
+ 
 
     // delete account and user_wordbank entries using sql transaction
     app.post("/:uid/delete", async (req, res) => {
