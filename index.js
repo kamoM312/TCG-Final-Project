@@ -223,51 +223,75 @@ app.post('/admin/login', async (req, res) => {
     // view word bank
     app.get(`/:uid/wordbank`, async (req, res) => {
       try {
-        const results = await db.query(`SELECT * FROM Wordbank;`);
+        const [results] = await dbPool.query(`SELECT * FROM Wordbank;`);
         res.json(results);
-      } catch {
+      } catch(error) {
         console.error('Error retrieving wordbank:', error);
         res.status(500).send('Error retrieving wordbank.');
       }
     });
 
     // view personal word bank 
-    app.get(`/:uid`, async (req, res) => {
-      try {
-        const id = await db.query(`SELECT id FROM Users = BIN_TO_UUID(?);`,
-          [uid]
-        );
-         try {
-        const results = await db.query(`SELECT Wordbank.* FROM Wordbank JOIN user_wordbank ON Wordbank.id = user_wordbank.word_id WHERE user_wordbank.user_id = ?;`,
-          [id]
-        );
-        res.json(results);
-      } catch {
-        console.error('Error retrieving wordbank:', error);
-        res.status(500).send('Error retrieving wordbank.');
-      }
-      } catch {
-        console.error('Error retrieving user details:', error);
-        res.status(500).send('Error retrieving user details.');
-      }
-     
-    });
+ app.get("/:uid", async (req, res) => {
+  const uid = req.params.uid;
+
+  try {
+
+    const [userRows] = await dbPool.query(
+      `SELECT id FROM Users WHERE uid = ${uid};`
+
+    );
+
+    if (!userRows || userRows.length === 0) {
+      return res.status(404).send("User not found");
+    }
+
+    const userId = userRows[0].id;
+
+    const [wordRows] = await dbPool.query(
+      `SELECT Wordbank.* 
+       FROM Wordbank 
+       JOIN user_wordbank 
+       ON Wordbank.id = user_wordbank.wordbank_id 
+       WHERE user_wordbank.user_id = ?;`,
+      [userId]
+    );
+
+    res.json(wordRows);
+  } catch (error) {
+    console.error("Error retrieving wordbank:", error.message);
+    res.status(500).send("Error retrieving wordbank.");
+  }
+});
+
 
     // add item to personal word bank from search
     app.post(`/:uid/add`, async (req, res) => {
       const uid = req.params.uid;
+      console.log("uid "+uid)
       const { word, definition, pronunciation, example } = req.body;
 
       try {
-        await db.query(`INSERT INTO Wordbank (word, definition, pronunciation, example) VALUES (?,?,?,?) ON DUPLICATE KEY UPDATE id=LAST_INSERT_ID(id);`,
+        await dbPool.query(`INSERT INTO Wordbank (word, definition, pronunciation, example) VALUES (?,?,?,?) ON DUPLICATE KEY UPDATE id=LAST_INSERT_ID(id);`,
           [word, definition, pronunciation, example]
         );
 
-        await db.query(`INSERT INTO user_wordbank (user_id, wordbank_id) VALUES (?, LAST_INSERT_ID());`,
-          [uid]
+        // get user id 
+        const [rows] = await dbPool.query(`SELECT id FROM Users WHERE uid = ${uid};` 
         );
-      } catch {
-        console.error(`Error adding word to personal wordbank.`);
+        
+        if (!rows || rows.length === 0) {
+      return res.status(404).send("User not found");
+    }
+    const userId = rows[0].id;
+    console.log(`id: ${userId}`);
+
+        await dbPool.query(`INSERT INTO user_wordbank (user_id, wordbank_id) VALUES (?, LAST_INSERT_ID());`,
+          [userId]
+        );
+        res.status(200).send("Success");
+      } catch(e) {
+        console.error(`Error adding word to personal wordbank. `+e.message);
         res.status(500).send(`Error adding word to personal wordbank.`)
       }
     })
@@ -278,19 +302,39 @@ app.post('/admin/login', async (req, res) => {
 
     // remove all items from personal word bank 
 
-    // delete account 
-    app.post(`/:uid/delete`, async (req, res) => {
-      const uid = req.body.uid;
-      try {
-      await db.query(`DELETE FROM Users WHERE uid=?;`,
-        [uid]
-      );
-      res.status(200).send('Succesfully deleted user.');
-    } catch {
-      console.error('Error deleting user:', error);
-      res.status(500).send('Error deleting user.');
+    // delete account and user_wordbank entries using sql transaction
+    app.post("/:uid/delete", async (req, res) => {
+  const uid = req.params.uid;
+
+  const conn = await dbPool.getConnection(); // assumes mysql2/promise
+  try {
+    await conn.beginTransaction();
+
+    // 1. Get the user's numeric ID
+    const [rows] = await conn.query(`SELECT id FROM Users WHERE uid = ${uid};`);
+    if (!rows || rows.length === 0) {
+      await conn.rollback();
+      return res.status(404).send("User not found.");
     }
-    });
+    const userId = rows[0].id;
+
+    // 2. Delete from user_wordbank first (foreign key dependency)
+    await conn.query(`DELETE FROM user_wordbank WHERE user_id = ?;`, [userId]);
+
+    // 3. Delete from Users
+    await conn.query(`DELETE FROM Users WHERE uid = ${uid};`);
+
+    await conn.commit();
+    res.status(200).send("Successfully deleted user and related wordbank entries.");
+  } catch (error) {
+    await conn.rollback().catch(() => {});
+    console.error("Error deleting user:", error.message);
+    res.status(500).send("Error deleting user.");
+  } finally {
+    conn.release();
+  }
+});
+
 
     // search for word
 app.post("/:uid/search", async (req, res) => {
@@ -375,13 +419,22 @@ app.get("/:uid/random", async (req, res) => {
       res.status(200).send('Succesfully deleted user.');
     } catch {
       console.error('Error deleting user:', error);
-      rs.status(500).send('Error deleting user.');
+      res.status(500).send('Error deleting user.');
     }
     });
 
     // reset user password 
 
-    // edit word bank item 
+    // clear word bank
+    app.post('/admin/deleteWorbank/:uid', async (req, res) => {
+      try {
+        await db.query(`DELETE * FROM Wordbank;`);
+        await db.query(`DELETE * FROM user_wordbank`);
+      } catch {
+        console.log(`Error clearing wordbank`);
+        res.status(500).send(`Error clearing wordbank`);
+      }
+    })
 
 
 app.listen(PORT, () => {
