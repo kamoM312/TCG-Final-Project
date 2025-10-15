@@ -511,18 +511,17 @@ app.get("/:uid/random", async (req, res) => {
     }
     });
 
-    // reset user password 
-
     // clear word bank
-    app.post('/admin/deleteWorbank/:uid', async (req, res) => {
+    app.post('/admin/:uid/deleteWordbank', async (req, res) => {
       try {
-        await db.query(`DELETE * FROM Wordbank;`);
-        await db.query(`DELETE * FROM user_wordbank`);
-      } catch {
-        console.log(`Error clearing wordbank`);
+        await dbPool.query(`DELETE FROM Wordbank;`);
+        await dbPool.query(`DELETE FROM user_wordbank`);
+        res.status(200).send('Successfully deleted wordbank.');
+      } catch (error) {
+        console.error(`Error clearing wordbank`, error.message);
         res.status(500).send(`Error clearing wordbank`);
       }
-    })
+    });
 
 
 app.listen(PORT, () => {
