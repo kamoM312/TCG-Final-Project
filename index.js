@@ -460,16 +460,35 @@ app.get("/:uid/random", async (req, res) => {
 
     // admin 
     // view users 
-    app.get(`/admin/users`, async (req, res) => {
-      const users = await db.query(`SELECT BIN_TO_UUID(uid) AS uid, full_name, email FROM Users`);
-      console.log(users);
-      res.json(users);
+    app.get(`/admin/:uid/users`, async (req, res) => {
+      try {
+      // const users = await db.query(`SELECT BIN_TO_UUID(uid) AS uid, full_name, email FROM Users`);
+      const [rows] = await dbPool.query(`SELECT BIN_TO_UUID(uid) AS uid, full_name, email FROM Users`);
+      console.log(rows);
+      res.json(rows);
+      } catch (error) {
+        console.error(`Error fetching users: `, error);
+        res.status(500).send(`Error fetching users.`)
+      }
     })
 
+    // user search 
+    app.get(`/admin/:uid/user`, async (req, res) => {
+      const userUid = req.body.userUid;
+      try {
+      const [rows] = await dbPool.query(`SELECT BIN_TO_UUID(uid) AS uid, full_name, email FROM Users WHERE uid=${userUid};`
+      );
+      console.log(rows);
+      res.json(rows);
+      } catch (error) {
+        console.error(`Error fetching user: `, error);
+        res.status(500).send(`Error fetching user.`)
+      }
+    })
 
     // remove user 
     app.post(`/admin/delete/:uid`, async (req, res) => {
-      const uid = req.body.uid;
+      const userUid = req.body.userUid;
       try {
       await db.query(`DELETE FROM Users WHERE uid=?`,
         [uid]
