@@ -487,16 +487,27 @@ app.get("/:uid/random", async (req, res) => {
     })
 
     // remove user 
-    app.post(`/admin/delete/:uid`, async (req, res) => {
+    app.post(`/admin/:uid/deleteUser`, async (req, res) => {
       const userUid = req.body.userUid;
       try {
-      await db.query(`DELETE FROM Users WHERE uid=?`,
-        [uid]
+      await dbPool.query(`DELETE FROM Users WHERE uid=${userUid};`
       );
       res.status(200).send('Succesfully deleted user.');
-    } catch {
+    } catch (error) {
       console.error('Error deleting user:', error);
       res.status(500).send('Error deleting user.');
+    }
+    });
+
+     // remove all users
+    app.post(`/admin/:uid/deleteUsers`, async (req, res) => {
+      try {
+      await dbPool.query(`DELETE FROM Users;`
+      );
+      res.status(200).send('Succesfully deleted all users.');
+    } catch (error) {
+      console.error('Error deleting users:', error);
+      res.status(500).send('Error deleting users.');
     }
     });
 
