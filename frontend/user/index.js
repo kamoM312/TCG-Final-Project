@@ -8,6 +8,7 @@ import express from 'express';
  let login_id;
  let isLogged = false;
  let userType;
+ let login_uid;
 
  app.use(express.static('public'));
 
@@ -18,6 +19,11 @@ app.use(bodyParser.urlencoded({ extended: true }));
 // login
 app.get("/", async (req, res) => {
   res.render("login.ejs");
+});
+
+// register
+app.get("/", async (req, res) => {
+  res.render("register.ejs");
 });
 
 // get user wordbank
@@ -45,6 +51,21 @@ app.get("/:uid", async (req, res) => {
     // });
   }
 });
+
+// get website wordbank 
+app.get("/:uid/wordbank", async (req, res) => {
+  try {
+    const user_id = req.params.uid;
+    const response = axios.get(`http:localhost:3000/${user_id}`);
+    const result = (await response).data;
+    if(result.length < 1){
+      throw new Error("No words founnd");
+    }
+    console.log(result);
+  } catch (error) {
+    console.error("Failed to make request: ", error.message);
+  }
+})
 
 
 
@@ -82,7 +103,7 @@ try {
 });
 
 
-// submit logins 
+// submit login
 app.post("/login", async (req, res) => {
   // if(isLogged){
   //   res.redirect(`/user/${login_id}`);
@@ -115,6 +136,27 @@ app.post("/login", async (req, res) => {
   //  res.render("login.ejs", { error: "Server unavailable. Please try again." });
  }
 }})
+
+// search word 
+app.post("/:uid/search", async (req, res) => {
+  //  if(!isLogged){
+  //   res.redirect("/");
+  // } else {
+  const word = req.body.word;
+ 
+  // }
+
+  console.log("data: " + word);
+
+  try {
+    const result = await axios.post(`http://localhost:3000/:uid/search`, { word });
+    console.log(result.data[0]);
+    // res.redirect(`/user/${login_id}`);
+  } catch (error) {
+    console.error("Failed to create user:", error.message);
+    // res.redirect(`/user/${login_id}`);
+  }}
+);
 
 
 
