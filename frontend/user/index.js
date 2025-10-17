@@ -52,6 +52,34 @@ app.get("/:uid", async (req, res) => {
 
 
 
+// register
+app.post("/register", async (req, res) => {
+const { full_name, email, password, retypePassword } = req.body;
+
+const data = { 
+  full_name: full_name,
+  email: email,
+  password: password,
+  retypePassword : retypePassword
+};
+console.log("Frontend data:", data);
+
+try {
+ await axios.post("http://localhost:3000/register", { data });
+//  res.redirect("/");
+  console.log("success");
+} catch (error) {
+ if (error.response) {
+   // API responded with error (validation, duplicate email, etc.)
+   console.log("API responded with error:", error.response.data);
+   res.render("register.ejs", { error: error.response.data.message });
+ } else {
+   // Network/server issue
+   console.log("Network/API error:", error.message);
+   res.render("register.ejs", { error: "Server unavailable. Please try again." });
+ }
+}
+});
 
 
 // submit logins 
