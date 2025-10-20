@@ -32,19 +32,26 @@ const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
   return match;
 }
 
-app.get("/", async (req, res) => {
-    const response = await ai.models.generateContent({
-    model: "gemini-2.5-flash",
-    contents: "Explain how AI works in a few words",
-  });
-  console.log(response.text);
-})
+function isValidUUID(uuid) {
+  return /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$/.test(uuid);
+}
+
+app.get("/favicon.ico", (req, res) => res.status(204).end());
+
+
+// app.get("/", async (req, res) => {
+//     const response = await ai.models.generateContent({
+//     model: "gemini-2.5-flash",
+//     contents: "Explain how AI works in a few words",
+//   });
+//   console.log(response.text);
+// })
 
 // register user 
 
     app.post('/register', async (req, res) => {
 
-        const {full_name, email, password, retypePassword} = req.body;
+        const {full_name, email, password, retypePassword} = req.body.data;
         console.log("full name"+full_name);
         console.log("email"+email);
 
@@ -95,7 +102,7 @@ app.get("/", async (req, res) => {
 
 // login user 
   app.post('/login', async (req, res) => {
-        const {email, password} = req.body; 
+        const {email, password} = req.body.data; 
         let user = "";
 
          if (!email || email.trim().length === 0) {
@@ -234,12 +241,13 @@ app.post('/admin/login', async (req, res) => {
     // view personal word bank 
  app.get("/:uid", async (req, res) => {
   const uid = req.params.uid;
+  console.log("uid "+uid);
 
   try {
 
     const [userRows] = await dbPool.query(
-      `SELECT id FROM Users WHERE uid = ${uid};`
-
+      `SELECT id FROM Users WHERE uid = UUID_TO_BIN(?);`,
+      [uid]
     );
 
     if (!userRows || userRows.length === 0) {
@@ -247,6 +255,7 @@ app.post('/admin/login', async (req, res) => {
     }
 
     const userId = userRows[0].id;
+    console.log("user id: "+userId);
 
     const [wordRows] = await dbPool.query(
       `SELECT Wordbank.* 
@@ -315,7 +324,7 @@ app.post('/admin/login', async (req, res) => {
     }
     const userId = rows[0].id;
 
-    // Delete all words linked to this user
+    // Delete word linked to this user
     await conn.query(`DELETE FROM user_wordbank WHERE user_id = ? AND wordbank_id = ?;`, [userId, wordId]);
 
     await conn.commit();

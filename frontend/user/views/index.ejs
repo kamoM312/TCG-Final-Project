@@ -1,0 +1,114 @@
+<div class="nav flex flex-horizontal">
+  <div>
+    <h1>Vocab Notebook</h1>
+  </div>
+
+  <div class="addStudent">
+    <a href="/logout">Logout</a>
+  </div>
+</div>
+
+<hr>
+
+<div class="search">
+  <form method="POST" action="/search" id="searchForm" onsubmit="return false;">
+    <input class="searchText" type="text" name="word" placeholder="Search a word..." required />
+    <button class="searchButton" type="submit">
+      <i class="fa fa-circle-thin"></i>
+    </button>
+  </form>
+</div>
+
+<% if (locals.error) { %>
+  <div class="error-message">
+    <p><%= error %></p>
+  </div>
+<% } else if (data) { %>
+  <% if (data.length < 1) { %>
+    <p class="no-result">No words found</p>
+  <% } else { %>
+    <div class="student-container">
+      <div class="student-header">
+        <ul class="flex flex-horizontal">
+          <li>Word</li>
+          <li>Definition</li>
+          <li>Pronunciation</li>
+          <li>Actions</li>
+        </ul>
+      </div>
+
+      <% data.forEach(word => { %>
+        <div class="flex flex-horizontal student-item">
+          <div><p><%= word.word %></p></div>
+          <div><p><%= word.definition %></p></div>
+          <div><p><%= word.pronunciation %></p></div>
+          <div>
+            <a href="#" class="delete-btn" data-id="<%= word.id %>" data-name="<%= word.word %>">
+              Delete
+            </a>
+          </div>
+        </div>
+      <% }); %>
+    </div>
+  <% } %>
+<% } %>
+
+<!-- Delete Confirmation Modal -->
+<div id="deleteModal" class="modal-background hidden">
+  <div class="flex flex-vertical createForm deleteBorders">
+    <h1>Confirm Delete</h1>
+    <hr>
+    <p id="delete-message"></p>
+    <div class="flex flex-horizontal delete-modal-buttons">
+      <button id="cancelDelete" type="button">Cancel</button>
+      <form id="deleteForm" method="POST">
+        <input type="submit" value="Delete"/>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+  const deleteModal = document.querySelector('#deleteModal');
+
+  // Open Delete Modal
+  document.querySelectorAll('.delete-btn').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.preventDefault();
+      const wordName = btn.dataset.name;
+      const wordId = btn.dataset.id;
+      document.querySelector('#delete-message').textContent =
+        `Are you sure you want to delete the word: "${wordName}"?`;
+      document.querySelector('#deleteForm').action = `/delete/${wordId}`;
+      deleteModal.classList.remove('hidden');
+    });
+  });
+
+  // Cancel Delete
+  document.querySelector('#cancelDelete').addEventListener('click', () => {
+    deleteModal.classList.add('hidden');
+  });
+
+  // Close modal when clicking outside
+  deleteModal.addEventListener('click', e => {
+    if (e.target === deleteModal) {
+      deleteModal.classList.add('hidden');
+    }
+  });
+
+  // Close modal with Escape key
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') {
+      deleteModal.classList.add('hidden');
+    }
+  });
+
+  // Handle search form submission safely
+  const searchForm = document.querySelector('#searchForm');
+  searchForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const word = searchForm.querySelector('input[name="word"]').value.trim();
+    if (!word) return;
+    searchForm.submit(); // only submit if user actually triggers it
+  });
+</script>

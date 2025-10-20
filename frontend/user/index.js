@@ -1,170 +1,110 @@
 import express from 'express';
- import bodyParser from 'body-parser';
- import axios from 'axios';
+import bodyParser from 'body-parser';
+import axios from 'axios';
+import session from 'express-session';
 
- const app = express();
- const port = 4000;
+const app = express();
+const port = 4000;
 
- let login_id;
- let isLogged = false;
- let userType;
- let login_uid;
-
- app.use(express.static('public'));
-
- app.use(bodyParser.json());
-
+app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
-// login
-app.get("/", async (req, res) => {
-  res.render("login.ejs");
+// Use sessions to track login state per user
+app.use(session({
+  secret: 'supersecretkey', // replace with env var in production
+  resave: false,
+  saveUninitialized: true,
+  cookie: { secure: false } // set true if HTTPS
+}));
+
+// ignore favicon requests
+app.get('/favicon.ico', (req, res) => res.status(204).end());
+
+// login page
+app.get("/", (req, res) => {
+  res.render("login.ejs", { error: null });
 });
 
-// register
-app.get("/", async (req, res) => {
-  res.render("register.ejs");
+// register page
+app.get("/register", (req, res) => {
+  res.render("register.ejs", { error: null });
 });
 
-// get user wordbank
-app.get("/:uid", async (req, res) => {
-  if(!isLogged){
+// handle login
+app.post("/login", async (req, res) => {
+  const { email, password } = req.body;
+  try {
+    const results = await axios.post("http://localhost:3000/login", { data: { email, password } });
+    req.session.userUid = results.data; // store UID in session
+    res.redirect("/dashboard");
+  } catch (error) {
+    let msg = "Server unavailable. Please try again.";
+    if (error.response) msg = error.response.data.message;
+    res.render("login.ejs", { error: msg });
+  }
+});
+
+// handle registration
+app.post("/register", async (req, res) => {
+  const { full_name, email, password, retypePassword } = req.body;
+  try {
+    await axios.post("http://localhost:3000/register", { data: { full_name, email, password, retypePassword } });
     res.redirect("/");
-  }
-  const user_id = req.params.uid;
-  try {
-    const response = await axios.get(`http://localhost:3000/${user_id}`);
-    const result = response.data;
-    if(result.length < 1){
-      throw new Error("No words found");
-    }
-    console.log(result)
-    // result.forEach(e => {
-    //   e.date = e.date_of_birth.substring(0, 10);
-    //   e.user_id = user_id;
-    // });
-    // res.render("index.ejs", { data: result });
   } catch (error) {
-    console.error("Failed to make request:", error.message);
-    // res.render("index.ejs", {
-    //   error: error.message,
-    // });
+    let msg = "Server unavailable. Please try again.";
+    if (error.response) msg = error.response.data.message;
+    res.render("register.ejs", { error: msg });
   }
 });
 
-// get website wordbank 
-app.get("/:uid/wordbank", async (req, res) => {
+// dashboard (user’s personal wordbank)
+app.get("/dashboard", async (req, res) => {
+  const uid = req.session.userUid;
+  if (!uid) return res.redirect("/");
+
   try {
-    const user_id = req.params.uid;
-    const response = axios.get(`http:localhost:3000/${user_id}`);
-    const result = (await response).data;
-    if(result.length < 1){
-      throw new Error("No words founnd");
-    }
-    console.log(result);
+    const response = await axios.get(`http://localhost:3000/${uid}`);
+    const words = response.data;
+    console.log(words);
+    if (!words || words.length < 1) throw new Error("No words found");
+    res.render("index.ejs",  {data: words});
   } catch (error) {
-    console.error("Failed to make request: ", error.message);
+    res.render("index.ejs", { data: [], error: error.message });
+  }
+});
+
+// search word
+app.post("/search", async (req, res) => {
+  const uid = req.session.userUid;
+  if (!uid) return res.redirect("/");
+
+  const word = req.body.word;
+  try {
+    const result = await axios.post(`http://localhost:3000/${uid}/search`, { word });
+    res.render("index.ejs", { data: result.data });
+  } catch (error) {
+    res.render("index.ejs", { data: [], error: error.message });
+  }
+});
+
+// delete word 
+app.post(`/delete/:id`, async (req, res) => {
+  const uid = req.session.userUid;
+
+  const id = req.body.id;
+  try {
+    
   }
 })
 
-
-
-
-
-
-
-// register
-app.post("/register", async (req, res) => {
-const { full_name, email, password, retypePassword } = req.body;
-
-const data = { 
-  full_name: full_name,
-  email: email,
-  password: password,
-  retypePassword : retypePassword
-};
-console.log("Frontend data:", data);
-
-try {
- await axios.post("http://localhost:3000/register", { data });
-//  res.redirect("/");
-  console.log("success");
-} catch (error) {
- if (error.response) {
-   // API responded with error (validation, duplicate email, etc.)
-   console.log("API responded with error:", error.response.data);
-   res.render("register.ejs", { error: error.response.data.message });
- } else {
-   // Network/server issue
-   console.log("Network/API error:", error.message);
-   res.render("register.ejs", { error: "Server unavailable. Please try again." });
- }
-}
+// logout
+app.get("/logout", (req, res) => {
+  req.session.destroy(err => {
+    if (err) console.error(err);
+    res.redirect("/");
+  });
 });
 
-
-// submit login
-app.post("/login", async (req, res) => {
-  // if(isLogged){
-  //   res.redirect(`/user/${login_id}`);
-  // }
-  const { email, password } = req.body;
-  const data = {
-    email: email,
-    password: password,
-  }
-
-  // console.log("data "+data.email);
-
-  try {
-    const results = await axios.post("http://localhost:3000/login", { data });
-    // console.log(results)
-    console.log(results.data)
-    login_id = results.data;
-    isLogged = true;
-    
-    res.redirect(`/${login_id}`);
-  } catch (error) {
-    if (error.response) {                                                                                                                                                                                                                                                                                                                                                                                                                              
-  
-   console.log("API responded with error:", error.response.data);
-  //  res.render("login.ejs", { error: error.response.data.message });
-
-  } else {
-   // Network/server issue
-   console.log("Network/API error:", error.message);
-  //  res.render("login.ejs", { error: "Server unavailable. Please try again." });
- }
-}})
-
-// search word 
-app.post("/:uid/search", async (req, res) => {
-  //  if(!isLogged){
-  //   res.redirect("/");
-  // } else {
-  const word = req.body.word;
- 
-  // }
-
-  console.log("data: " + word);
-
-  try {
-    const result = await axios.post(`http://localhost:3000/:uid/search`, { word });
-    console.log(result.data[0]);
-    // res.redirect(`/user/${login_id}`);
-  } catch (error) {
-    console.error("Failed to create user:", error.message);
-    // res.redirect(`/user/${login_id}`);
-  }}
-);
-
-
-
-
-
-
-
-
 app.listen(port, () => {
-        console.log(`Server running on http://localhost:${port}`);
+  console.log(`Server running on http://localhost:${port}`);
 });
