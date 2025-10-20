@@ -88,12 +88,18 @@ app.post("/search", async (req, res) => {
 });
 
 // delete word 
-app.post(`/delete/:id`, async (req, res) => {
+app.post(`/delete/:wordId`, async (req, res) => {
   const uid = req.session.userUid;
 
-  const id = req.body.id;
+  const wordId = req.params.wordId;
+  console.log("word id "+wordId);
   try {
-    
+    await axios.post(`http://localhost:3000/${uid}/delete-word`, { wordId });
+    console.log("Successfully deleted");
+    res.redirect(`/dashboard`);
+  } catch (error) {
+    console.error(`Delete operation failed: `, error.message);
+    res.redirect(`/dashboard`);
   }
 })
 
