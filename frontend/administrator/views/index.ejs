@@ -1,17 +1,14 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
+<%- include('partials/header.ejs') %>
   <title>Admin Panel</title>
-  <link rel="stylesheet" href="/css/admin.css" />
+
 </head>
 <body>
-  <nav class="navbar">
+  <!-- <nav class="navbar">
     <h1>Admin Panel</h1>
     <a href="/admin/logout">Logout</a>
-  </nav>
+  </nav> -->
 
-  <div class="admin-dashboard">
+  <!-- <div class="admin-dashboard">
     <div class="card">
       <h2>Manage Users</h2>
       <a href="/admin/users">Go to Users</a>
@@ -22,5 +19,25 @@
     </div>
   </div>
 </body>
-</html>
+</html> -->
 
+ <nav class="navbar">
+    <h1>Admin Panel</h1>
+    <div class="nav-links">
+      <a href="/admin/users">Users</a>
+      <a href="/admin/wordbank">Wordbank</a>
+      <a href="/admin/logout" class="logout">Logout</a>
+    </div>
+  </nav>
+
+  <main class="dashboard">
+    <div class="card" onclick="location.href='/admin/users'">
+      <h2>Manage Users</h2>
+      <p>View, search, and remove users</p>
+    </div>
+
+    <div class="card" onclick="location.href='/admin/wordbank'">
+      <h2>Manage Wordbank</h2>
+      <p>View and clear the word database</p>
+    </div>
+  </main>

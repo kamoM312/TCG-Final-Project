@@ -57,11 +57,11 @@ app.post("/admin/register", async (req, res) => {
 });
 
 app.get('/admin/logout', (req, res) => {
-  req.session.destroy(() => res.redirect('/admin/login'));
+  req.session.destroy(() => res.redirect('/'));
 });
 
 app.get('/admin/dashboard', (req, res) => {
-  if (!req.session.adminUid) return res.redirect('/admin/login');
+  if (!req.session.adminUid) return res.redirect('/');
   res.render('index.ejs', { adminUid: req.params.uid });
 });
 
