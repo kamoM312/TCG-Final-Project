@@ -81,9 +81,9 @@ app.post("/search", async (req, res) => {
   const word = req.body.word;
   try {
     const result = await axios.post(`http://localhost:3000/${uid}/search`, { word });
-    res.render("index.ejs", { data: result.data });
+    res.render("index2.ejs", { userUid: uid, data: result.data });
   } catch (error) {
-    res.render("index.ejs", { data: [], error: error.message });
+    res.render("index2.ejs", { userUid: uid, data: [], error: error.message });
   }
 });
 
@@ -102,6 +102,50 @@ app.post(`/delete/:wordId`, async (req, res) => {
     res.redirect(`/dashboard`);
   }
 })
+
+// add word 
+// Add word to user's wordbank (Frontend → Backend)
+app.post('/:wordId/add', async (req, res) => {
+  try {
+    // Get the current user's UID (you likely stored it after login)
+    const uid = req.session.userUid; 
+    if (!uid) {
+      console.error("No UID found in session or login.");
+      return res.status(401).send("Not logged in");
+    }
+
+    // Extract word data from form
+    const { word, definition, pronunciation, example } = req.body;
+
+    // Forward to backend (port 3000)
+    const response = await axios.post(`http://localhost:3000/${uid}/add`, {
+      word,
+      definition,
+      pronunciation,
+      example,
+    });
+
+    console.log("Word added successfully:", response.data);
+
+    // Redirect or render success message
+    res.redirect(`/dashboard`); 
+  } catch (error) {
+    console.error("Failed to add word:", error.message);
+
+    if (error.response) {
+      res.render("index.ejs", { 
+        error: error.response.data || "Failed to add word.", 
+        data: [] 
+      });
+    } else {
+      res.render("index.ejs", { 
+        error: "Server unavailable. Please try again.", 
+        data: [] 
+      });
+    }
+  }
+});
+
 
 // logout
 app.get("/logout", (req, res) => {

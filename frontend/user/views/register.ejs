@@ -1,1 +1,63 @@
-<!-- nav  -->
+<% if (locals.error) { %>
+    <div class="error-message">
+      <p><%= error %></p>
+    </div>
+  <% } %>
+
+ <div class="flex flex-vertical login-body">
+    <h1>Registration</h1>
+
+     <form class="flex flex-vertical createFormBody" method="POST" action="/register" >
+        <label for="name">Full Name</label>
+        <input type="text" id="name" name="full_name" />
+
+        <label for="email">Email</label>
+        <input type="text" id="email" name="email" />
+
+        <label for="email">Password</label>
+        <input type="text" id="password" name="password" />
+
+        <label for="email">Retype Password</label>
+        <input type="text" id="password" name="retypePassword" />
+
+        <input type="submit" value="Register" />
+    </form>
+    <hr>
+    <div class="flex flex-vertical">
+        <div>
+            <p>Already have an account?</p>
+        </div>
+        <div class="flex flex-horizontal sign-in">
+            <div>
+                <a href="/">Sign in</a>
+            </div>   
+        </div>
+    </div>
+</div>
+
+  <script>
+    // Prevent auto-submit
+    const form = document.getElementById('loginForm');
+    let allowSubmit = false;
+
+    // Only allow submit if the user clicks the button
+    form.addEventListener('submit', (e) => {
+      if (!allowSubmit) {
+        e.preventDefault();
+        console.log('🛑 Auto-submit prevented');
+      }
+    });
+
+    // Enable submit on user click
+    form.querySelector('input[type="submit"]').addEventListener('click', () => {
+      allowSubmit = true;
+    });
+
+    // Optional: prevent enter key from auto-submitting
+    form.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !allowSubmit) {
+        e.preventDefault();
+        console.log('🛑 Enter key prevented from auto-submitting');
+      }
+    });
+  </script>
