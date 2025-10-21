@@ -2,11 +2,11 @@
   <title>Admin Register</title>
 
 </head>
-<body>
-  <!-- < -->
 
-  <div class="login-container">
-    <form class="login-box" method="POST" action="/admin/register">
+  <!-- < -->
+<body class="admin-auth-body">
+  <div class="auth-container">
+    <form class="auth-box" method="POST" action="/admin/register" onsubmit="return validateForm()">
       <h1>Admin Register</h1>
 
       <% if (locals.error) { %>
@@ -23,15 +23,38 @@
       <input type="password" name="password" id="password" required placeholder="Create a password" />
 
       <label for="confirm_password">Confirm Password</label>
-      <input type="password" name="confirm_password" id="confirm_password" required placeholder="Confirm your password" />
+      <input type="password" name="retypePassword" id="retypePassword" required placeholder="Confirm your password" />
 
-      <button type="submit">Register</button>
+      <button type="submit" class="btn-primary">Register</button>
 
-      <p class="register-text">
+      <p class="auth-text">
         Already have an account? <a href="/">Login</a>
       </p>
     </form>
   </div>
+
+  <script>
+    function validateForm() {
+      const password = document.getElementById('password').value.trim();
+      const confirm = document.getElementById('confirm_password').value.trim();
+
+      if (password.length < 6) {
+        alert("Password must be at least 6 characters long.");
+        return false;
+      }
+      if (password !== confirm) {
+        alert("Passwords do not match.");
+        return false;
+      }
+      return true;
+    }
+  </script>
+ 
+
+
+
+
+   
 </body>
 </html>
 

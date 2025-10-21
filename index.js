@@ -10,9 +10,6 @@ const PORT = 3000;
 const saltRounds = 10;
 const app = express();
 
-let login_id;
-    let isLogged = false;
-
 app.use(bodyParser.json());
 
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -331,7 +328,7 @@ app.post('/admin/login', async (req, res) => {
     const userId = rows[0].id;
 
     // Delete word linked to this user
-    console.log("Delete operation part 2");
+    console.log("Delete operation part 2"); 
     await conn.query(`DELETE FROM user_wordbank WHERE user_id = ? AND wordbank_id = ?;`, [userId, wordId]);
 
     await conn.commit();

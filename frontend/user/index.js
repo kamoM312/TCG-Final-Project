@@ -6,6 +6,7 @@ import session from 'express-session';
 const app = express();
 const port = 4000;
 
+app.use(express.static('public'));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
