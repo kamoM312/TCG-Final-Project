@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Manage Wordbank</title>
+  <link rel="stylesheet" href="/css/admin.css" />
+</head>
+<body>
+  <nav class="navbar">
+    <h1>Admin Panel</h1>
+    <div class="nav-links">
+      <a href="/admin/dashboard">Dashboard</a>
+      <a href="/admin/logout">Logout</a>
+    </div>
+  </nav>
+
+  <main class="container">
+    <h2>Wordbank Entries</h2>
+
+    <% if (locals.error) { %>
+      <p class="error"><%= error %></p>
+    <% } %>
+
+    <% if (words && words.length > 0) { %>
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Word</th>
+            <th>Definition</th>
+            <th>Pronunciation</th>
+            <th>Example</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% words.forEach(word => { %>
+            <tr>
+              <td><%= word.id %></td>
+              <td><%= word.word %></td>
+              <td><%= word.definition %></td>
+              <td><%= word.pronunciation %></td>
+              <td><%= word.example %></td>
+            </tr>
+          <% }); %>
+        </tbody>
+      </table>
+    <% } else { %>
+      <p>No words found in the Wordbank.</p>
+    <% } %>
+
+    <form method="POST" action="/admin/deleteWordbank">
+      <button type="submit" class="danger-btn">Clear Entire Wordbank</button>
+    </form>
+  </main>
+</body>
+</html>
+

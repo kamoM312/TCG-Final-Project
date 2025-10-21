@@ -140,7 +140,7 @@ app.get("/favicon.ico", (req, res) => res.status(204).end());
 // register admin 
   app.post('/admin/register', async (req, res) => {
 
-        const {full_name, email, password, retypePassword} = req.body;
+        const {full_name, email, password, retypePassword} = req.body.data;
         console.log("full name"+full_name);
         console.log("email"+email);
 
@@ -191,7 +191,7 @@ app.get("/favicon.ico", (req, res) => res.status(204).end());
 
 // login admin 
 app.post('/admin/login', async (req, res) => {
-        const {email, password} = req.body; 
+        const {email, password} = req.body.data; 
         let user = "";
 
          if (!email || email.trim().length === 0) {
@@ -505,7 +505,8 @@ app.get("/:uid/random", async (req, res) => {
     app.post(`/admin/:uid/deleteUser`, async (req, res) => {
       const userUid = req.body.userUid;
       try {
-      await dbPool.query(`DELETE FROM Users WHERE uid=${userUid};`
+      await dbPool.query(`DELETE FROM Users WHERE uid = UUID_TO_BIN(?);`,
+        [userUid]
       );
       res.status(200).send('Succesfully deleted user.');
     } catch (error) {
