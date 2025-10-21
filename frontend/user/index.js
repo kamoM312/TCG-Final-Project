@@ -73,6 +73,38 @@ app.get("/dashboard", async (req, res) => {
   }
 });
 
+// full wordbank
+app.get("/wordbank", async (req, res) => {
+  const uid = req.session.userUid;
+  if (!uid) return res.redirect("/");
+
+  try {
+    const response = await axios.get(`http://localhost:3000/${uid}/wordbank`);
+    const words = response.data;
+    console.log(words);
+    if (!words || words.length < 1) throw new Error("No words found");
+    res.render("index2.ejs",  {userUid: uid, data: words});
+  } catch (error) {
+    res.render("index2.ejs", { userUid: uid, data: [], error: error.message });
+  }
+});
+
+// random word
+app.get("/random", async (req, res) => {
+  const uid = req.session.userUid;
+  if (!uid) return res.redirect("/");
+
+  try {
+    const response = await axios.get(`http://localhost:3000/${uid}/random`);
+    const words = response.data;
+    console.log(words);
+    if (!words || words.length < 1) throw new Error("No words found");
+    res.render("index2.ejs",  {userUid: uid, data: words});
+  } catch (error) {
+    res.render("index2.ejs", { userUid: uid, data: [], error: error.message });
+  }
+});
+
 // search word
 app.post("/search", async (req, res) => {
   const uid = req.session.userUid;

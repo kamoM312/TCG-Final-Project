@@ -286,7 +286,8 @@ app.post('/admin/login', async (req, res) => {
         );
 
         // get user id 
-        const [rows] = await dbPool.query(`SELECT id FROM Users WHERE uid = ${uid};` 
+        const [rows] = await dbPool.query(`SELECT id FROM Users WHERE uid = UUID_TO_BIN(?);`,
+          [uid] 
         );
         
         if (!rows || rows.length === 0) {
@@ -443,7 +444,6 @@ app.post("/:uid/search", async (req, res) => {
 
 // get word of the day 
 app.get("/:uid/random", async (req, res) => {
-    const word = req.body.word;
     const response = await ai.models.generateContent({
     model: "gemini-2.5-flash",
     contents: `Pick a completely random english word from the oxford dictionary. Provide a definition, pronunciation and usage example for the word.`,
