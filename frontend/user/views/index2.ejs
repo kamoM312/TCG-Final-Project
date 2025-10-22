@@ -1,72 +1,71 @@
-<div class="nav flex flex-horizontal">
-  <div>
-    <h1>Vocab Notebook</h1>
+<%- include('partials/header.ejs') %>
+
+<!-- Navigation Bar -->
+<nav class="navbar user-navbar">
+  <div class="navbar-left">
+    <h1 class="brand-title">📘 Vocab Notebook</h1>
   </div>
-
-  <div class="addStudent">
-    <a href="/logout">Logout</a>
+  <div class="navbar-right">
+     <a href="/dashboard" class="nav-link">Home</a>
+       <a href="/random" class="nav-link">Random Word</a>
+    <a href="/logout" class="nav-link logout-link">Logout</a>
   </div>
-</div>
+</nav>
 
-<hr>
-
-<div class="search">
+<!-- Search Section -->
+<section class="search-section">
   <form method="POST" action="/search" id="searchForm" onsubmit="return false;">
-    <input class="searchText" type="text" name="word" placeholder="Search a word..." required />
-    <button class="searchButton" type="submit">
-      <i class="fa fa-circle-thin"></i>
-    </button>
+    <input
+      class="search-input"
+      type="text"
+      name="word"
+      placeholder="Search for a new word..."
+      required
+    />
+    <button class="search-btn" type="submit">🔍</button>
   </form>
-</div>
+</section>
 
-<% if (locals.error) { %>
-  <div class="error-message">
-    <p><%= error %></p>
-  </div>
-<% } else if (data) { %>
-  <% if (data.length < 1) { %>
-    <p class="no-result">No words found</p>
-  <% } else { %>
-    <div class="student-container">
-      <div class="student-header">
-        <ul class="flex flex-horizontal">
-          <li>Word</li>
-          <li>Definition</li>
-          <li>Pronunciation</li>
-          <li>Actions</li>
-        </ul>
-      </div>
-
-      <% data.forEach(word => { %>
-        <div class="flex flex-horizontal student-item">
-          <div><p><%= word.word %></p></div>
-          <div><p><%= word.definition %></p></div>
-          <div><p><%= word.pronunciation %></p></div>
-          <div>
-            <a href="#" class="add-btn" 
+<!-- Word Results -->
+<main class="content">
+  <% if (locals.error) { %>
+    <div class="alert alert-error"><%= error %></div>
+  <% } else if (data) { %>
+    <% if (data.length < 1) { %>
+      <p class="no-result">No words found</p>
+    <% } else { %>
+      <div class="word-results">
+        <% data.forEach(word => { %>
+          <div class="word-card">
+            <p><strong>Word:</strong> <%= word.word %></p>
+            <p><strong>Definition:</strong> <%= word.definition %></p>
+            <p><strong>Pronunciation:</strong> <%= word.pronunciation %></p>
+            <p><strong>Example:</strong> <%= word.example || '—' %></p>
+            <a href="#"
+               class="add-btn"
                data-word="<%= word.word %>"
                data-definition="<%= word.definition %>"
                data-pronunciation="<%= word.pronunciation %>"
                data-example="<%= word.example || '' %>">
-              ➕ Add
+               ➕ Add
             </a>
           </div>
-        </div>
-      <% }); %>
-    </div>
+        <% }); %>
+      </div>
+    <% } %>
   <% } %>
-<% } %>
+</main>
 
-<!-- Add Confirmation Modal -->
-<div id="addModal" class="modal-background hidden">
-  <div class="flex flex-vertical createForm deleteBorders">
-    <h1>Confirm Add</h1>
+<!-- Add Word Modal -->
+<div id="addModal" class="modal hidden">
+  <div class="modal-content">
+    <h2>Confirm Add</h2>
     <hr>
     <p id="add-message"></p>
-    <div class="flex flex-horizontal delete-modal-buttons">
-      <button id="cancelAdd" type="button">Cancel</button>
+    <div class="modal-actions">
+      <button id="cancelAdd" type="button" class="btn btn-cancel">Cancel</button>
       <form id="addForm" method="POST">
-        <input type="submit" value="Add Word"/>
+        <input type="submit" value="Add Word" class="btn btn-primary"/>
       </form>
     </div>
   </div>
@@ -84,46 +83,44 @@
       const pronunciation = btn.dataset.pronunciation;
       const example = btn.dataset.example;
 
-      // Update modal text
-      document.querySelector('#add-message').textContent = 
-        `Do you want to add the word "${word}" to your wordbank?`;
+      document.querySelector('#add-message').textContent =
+        `Add "${word}" to your Word Bank?`;
 
-      // Set form action and hidden inputs
       const addForm = document.querySelector('#addForm');
-      addForm.action = `/<%= userUid %>/add`;
+      addForm.action = "/add"; // backend uses session UID
 
-      // Clear any previous hidden inputs
       addForm.innerHTML = `
         <input type="hidden" name="word" value="${word}">
         <input type="hidden" name="definition" value="${definition}">
         <input type="hidden" name="pronunciation" value="${pronunciation}">
         <input type="hidden" name="example" value="${example}">
-        <input type="submit" value="Add Word"/>
+        <input type="submit" value="Add Word" class="btn btn-primary"/>
       `;
 
       addModal.classList.remove('hidden');
     });
   });
 
-  // Cancel Add
   document.querySelector('#cancelAdd').addEventListener('click', () => {
     addModal.classList.add('hidden');
   });
 
-  // Close modal when clicking outside
   addModal.addEventListener('click', e => {
     if (e.target === addModal) addModal.classList.add('hidden');
   });
 
-  // Close modal with Escape key
   document.addEventListener('keydown', e => {
     if (e.key === 'Escape') addModal.classList.add('hidden');
   });
 
   // Safe search submission
   const searchForm = document.querySelector('#searchForm');
-  searchForm.addEventListener('submit', () => {
+  searchForm.addEventListener('submit', e => {
+    e.preventDefault();
     const word = searchForm.querySelector('input[name="word"]').value.trim();
     if (word) searchForm.submit();
   });
 </script>
+
+
+

@@ -1,123 +1,101 @@
-<div class="nav flex flex-horizontal">
-  <div>
-    <h1>Vocab Notebook</h1>
-  </div>
+<%- include('partials/header.ejs') %>
 
-  <div class="addStudent">
-    <a href="/random">Random Word</a>
-  </div>
-</div>
+<body class="light-body">
+  <!-- Navbar -->
+  <nav class="navbar user-navbar">
+    <div class="navbar-left">
+      <h1 class="brand-title">📘 Vocab Notebook</h1>
+    </div>
+    <div class="navbar-right">
+      <a href="/dashboard" class="nav-link">Home</a>
+      <a href="/wordbank" class="nav-link">Word Bank</a>
+       <a href="/random" class="nav-link">Random Word</a>
+      <a href="/logout" class="nav-link logout-link">Logout</a>
+    </div>
+  </nav>
 
-  <div class="addStudent">
-    <a href="/wordbank">Word Bank</a>
-  </div>
+  <!-- Search Section -->
+  <section class="search-section">
+    <form method="POST" action="/search" id="searchForm" onsubmit="return false;">
+      <input class="search-input" type="text" name="word" placeholder="Search for a word..." required />
+      <button class="search-btn" type="submit">🔍</button>
+    </form>
+  </section>
 
-  <div class="addStudent">
-    <a href="/logout">Logout</a>
-  </div>
-</div>
-
-<hr>
-
-<div class="search">
-  <form method="POST" action="/search" id="searchForm" onsubmit="return false;">
-    <input class="searchText" type="text" name="word" placeholder="Search a word..." required />
-    <button class="searchButton" type="submit">
-      <i class="fa fa-circle-thin"></i>
-    </button>
-  </form>
-</div>
-
-<% if (locals.error) { %>
-  <div class="error-message">
-    <p><%= error %></p>
-  </div>
-<% } else if (data) { %>
-  <% if (data.length < 1) { %>
-    <p class="no-result">No words found</p>
-  <% } else { %>
-    <div class="student-container">
-      <div class="student-header">
-        <ul class="flex flex-horizontal">
-          <li>Word</li>
-          <li>Definition</li>
-          <li>Pronunciation</li>
-          <li>Actions</li>
-        </ul>
-      </div>
-
-      <% data.forEach(word => { %>
-        <div class="flex flex-horizontal student-item">
-          <div><p><%= word.word %></p></div>
-          <div><p><%= word.definition %></p></div>
-          <div><p><%= word.pronunciation %></p></div>
-          <div>
-            <a href="#" class="delete-btn" data-id="<%= word.id %>" data-name="<%= word.word %>">
-              Delete
-            </a>
-          </div>
+  <!-- Word List -->
+  <main class="content">
+    <% if (locals.error) { %>
+      <div class="alert alert-error"><%= error %></div>
+    <% } else if (data) { %>
+      <% if (data.length < 1) { %>
+        <p class="no-result">No words found.</p>
+      <% } else { %>
+        <div class="word-results">
+          <% data.forEach(word => { %>
+            <div class="word-card">
+              <p><strong>Word:</strong> <%= word.word %></p>
+              <p><strong>Definition:</strong> <%= word.definition %></p>
+              <p><strong>Pronunciation:</strong> <%= word.pronunciation %></p>
+              <p><strong>Example:</strong> <%= word.example || "—" %></p>
+              <div class="word-actions">
+                <!-- Keep delete functionality unchanged -->
+                <a href="#" class="delete-btn" data-id="<%= word.id %>" data-name="<%= word.word %>">Delete</a>
+              </div>
+            </div>
+          <% }) %>
         </div>
-      <% }); %>
-    </div>
-  <% } %>
-<% } %>
+      <% } %>
+    <% } %>
+  </main>
 
-<!-- Delete Confirmation Modal -->
-<div id="deleteModal" class="modal-background hidden">
-  <div class="flex flex-vertical createForm deleteBorders">
-    <h1>Confirm Delete</h1>
-    <hr>
-    <p id="delete-message"></p>
-    <div class="flex flex-horizontal delete-modal-buttons">
-      <button id="cancelDelete" type="button">Cancel</button>
-      <form id="deleteForm" method="POST">
-        <input type="submit" value="Delete"/>
-      </form>
+  <!-- Delete Confirmation Modal (unchanged) -->
+  <div id="deleteModal" class="modal hidden">
+    <div class="modal-content">
+      <h2>Confirm Delete</h2>
+      <p id="delete-message"></p>
+      <div class="modal-actions">
+        <button id="cancelDelete" type="button" class="btn-secondary">Cancel</button>
+        <form id="deleteForm" method="POST">
+          <input type="submit" value="Delete" class="btn-danger"/>
+        </form>
+      </div>
     </div>
   </div>
-</div>
 
-<script>
-  const deleteModal = document.querySelector('#deleteModal');
+  <!-- JS Logic -->
+  <script>
+    // Delete modal logic (unchanged)
+    const deleteModal = document.querySelector('#deleteModal');
 
-  // Open Delete Modal
-  document.querySelectorAll('.delete-btn').forEach(btn => {
-    btn.addEventListener('click', e => {
-      e.preventDefault();
-      const wordName = btn.dataset.name;
-      const wordId = btn.dataset.id;
-      document.querySelector('#delete-message').textContent =
-        `Are you sure you want to delete the word: "${wordName}"?`;
-      document.querySelector('#deleteForm').action = `/delete/${wordId}`;
-      deleteModal.classList.remove('hidden');
+    document.querySelectorAll('.delete-btn').forEach(btn => {
+      btn.addEventListener('click', e => {
+        e.preventDefault();
+        const wordName = btn.dataset.name;
+        const wordId = btn.dataset.id;
+        document.querySelector('#delete-message').textContent =
+          `Are you sure you want to delete "${wordName}"?`;
+        document.querySelector('#deleteForm').action = `/delete/${wordId}`;
+        deleteModal.classList.remove('hidden');
+      });
     });
-  });
 
-  // Cancel Delete
-  document.querySelector('#cancelDelete').addEventListener('click', () => {
-    deleteModal.classList.add('hidden');
-  });
-
-  // Close modal when clicking outside
-  deleteModal.addEventListener('click', e => {
-    if (e.target === deleteModal) {
+    document.querySelector('#cancelDelete').addEventListener('click', () => {
       deleteModal.classList.add('hidden');
-    }
-  });
+    });
 
-  // Close modal with Escape key
-  document.addEventListener('keydown', e => {
-    if (e.key === 'Escape') {
-      deleteModal.classList.add('hidden');
-    }
-  });
+    deleteModal.addEventListener('click', e => {
+      if (e.target === deleteModal) deleteModal.classList.add('hidden');
+    });
 
-  // Handle search form submission safely
-  const searchForm = document.querySelector('#searchForm');
-  searchForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const word = searchForm.querySelector('input[name="word"]').value.trim();
-    if (!word) return;
-    searchForm.submit(); // only submit if user actually triggers it
-  });
-</script>
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape') deleteModal.classList.add('hidden');
+    });
+
+    // Search form submission
+    const searchForm = document.querySelector('#searchForm');
+    searchForm.addEventListener('submit', e => {
+      e.preventDefault();
+      const word = searchForm.querySelector('input[name="word"]').value.trim();
+      if (word) searchForm.submit();
+    });
+  </script>

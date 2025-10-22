@@ -138,7 +138,7 @@ app.post(`/delete/:wordId`, async (req, res) => {
 
 // add word 
 // Add word to user's wordbank (Frontend → Backend)
-app.post('/:wordId/add', async (req, res) => {
+app.post('/add', async (req, res) => {
   try {
     // Get the current user's UID (you likely stored it after login)
     const uid = req.session.userUid; 
