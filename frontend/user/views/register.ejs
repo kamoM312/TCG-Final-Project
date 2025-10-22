@@ -1,63 +1,56 @@
-<% if (locals.error) { %>
-    <div class="error-message">
-      <p><%= error %></p>
+<%- include('partials/header.ejs') %>
+
+<body class="light-body">
+  <nav class="navbar user-navbar">
+    <div class="navbar-left">
+      <h1 class="brand-title">📘 Vocab Notebook</h1>
     </div>
-  <% } %>
+    <div class="navbar-right">
+      <a href="/" class="nav-link">Login</a>
+    </div>
+  </nav>
 
- <div class="flex flex-vertical login-body">
-    <h1>Registration</h1>
+  <main class="container login-container">
+    <% if (locals.error) { %>
+      <div class="alert alert-error"><%= error %></div>
+    <% } %>
 
-     <form class="flex flex-vertical createFormBody" method="POST" action="/register" >
-        <label for="name">Full Name</label>
-        <input type="text" id="name" name="full_name" />
+    <form id="registerForm" class="login-box" method="POST" action="/register">
+      <h2>Register</h2>
 
-        <label for="email">Email</label>
-        <input type="text" id="email" name="email" />
+      <label for="name">Full Name</label>
+      <input type="text" id="name" name="full_name" placeholder="Enter your full name" required />
 
-        <label for="email">Password</label>
-        <input type="text" id="password" name="password" />
+      <label for="email">Email</label>
+      <input type="email" id="email" name="email" placeholder="Enter your email" required />
 
-        <label for="email">Retype Password</label>
-        <input type="text" id="password" name="retypePassword" />
+      <label for="password">Password</label>
+      <input type="password" id="password" name="password" placeholder="Create a password" required />
 
-        <input type="submit" value="Register" />
+      <label for="retypePassword">Retype Password</label>
+      <input type="password" id="retypePassword" name="retypePassword" placeholder="Confirm your password" required />
+
+      <input type="submit" value="Register" class="btn btn-primary" />
     </form>
-    <hr>
-    <div class="flex flex-vertical">
-        <div>
-            <p>Already have an account?</p>
-        </div>
-        <div class="flex flex-horizontal sign-in">
-            <div>
-                <a href="/">Sign in</a>
-            </div>   
-        </div>
-    </div>
-</div>
+
+    <p class="register-text">
+      Already have an account? <a href="/">Login</a>
+    </p>
+  </main>
 
   <script>
-    // Prevent auto-submit
-    const form = document.getElementById('loginForm');
+    const form = document.getElementById('registerForm');
     let allowSubmit = false;
 
-    // Only allow submit if the user clicks the button
     form.addEventListener('submit', (e) => {
-      if (!allowSubmit) {
-        e.preventDefault();
-        console.log('🛑 Auto-submit prevented');
-      }
+      if (!allowSubmit) e.preventDefault();
     });
 
-    // Enable submit on user click
     form.querySelector('input[type="submit"]').addEventListener('click', () => {
       allowSubmit = true;
     });
 
-    // Optional: prevent enter key from auto-submitting
     form.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter' && !allowSubmit) {
-        e.preventDefault();
-        console.log('🛑 Enter key prevented from auto-submitting');
-      }
+      if (e.key === 'Enter' && !allowSubmit) e.preventDefault();
     });
   </script>
