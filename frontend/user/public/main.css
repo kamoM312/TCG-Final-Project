@@ -55,6 +55,9 @@ body.light-body {
 /* ============================
    Search Section
 ============================ */
+.search {
+  display: flex;
+}
 .search-section {
   display: flex;
   justify-content: center;
@@ -88,6 +91,10 @@ body.light-body {
 /* ============================
    Word Cards
 ============================ */
+.content {
+  display: flex;
+  justify-content: center;
+}
 .word-results {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
@@ -116,6 +123,7 @@ body.light-body {
   margin-top: 0.5rem;
   display: flex;
   gap: 0.5rem;
+  justify-content: center;
 }
 
 .add-btn, .delete-btn {
@@ -131,6 +139,7 @@ body.light-body {
 .add-btn {
   background-color: #2ecc71;
   color: white;
+  align-self: center;
 }
 
 .add-btn:hover {
