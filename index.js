@@ -114,7 +114,11 @@ app.get("/favicon.ico", (req, res) => res.status(204).end());
 
         try {
             const result = await dbPool.query(`SELECT BIN_TO_UUID(uid) AS uid, password FROM Users WHERE email = '${email}';`);
-            console.log(result)
+
+            if(!result[0][0]) {
+              return res.status(400).json({message: "Email does not exist"})
+            }
+
             const user = result[0][0].uid;
             const dbPassword = result[0][0].password;
             const isMatch = await verifyPassword(password, dbPassword);
