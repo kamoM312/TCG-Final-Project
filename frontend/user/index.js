@@ -53,7 +53,9 @@ app.post("/register", async (req, res) => {
     res.redirect("/");
   } catch (error) {
     let msg = "Server unavailable. Please try again.";
-    if (error.response) msg = error.response.data.message;
+    if (error.response && error.response.data && error.response.data.message) {
+      msg = error.response.data.message;
+    }
     res.render("register.ejs", { error: msg });
   }
 });

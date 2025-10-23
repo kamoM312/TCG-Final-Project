@@ -31,22 +31,5 @@
       Don't have an account? <a href="/register">Register</a>
     </p>
   </main>
-
-  <script>
-    // Prevent auto-submit
-    const form = document.getElementById('loginForm');
-    let allowSubmit = false;
-
-    form.addEventListener('submit', (e) => {
-      if (!allowSubmit) e.preventDefault();
-    });
-
-    form.querySelector('input[type="submit"]').addEventListener('click', () => {
-      allowSubmit = true;
-    });
-
-    form.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter' && !allowSubmit) e.preventDefault();
-    });
-  </script>
+</body>
 

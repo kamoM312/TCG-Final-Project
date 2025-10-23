@@ -479,16 +479,24 @@ body.light-body {
 
 
 /* Error Alert */
+/* Error alert box */
 .alert-error {
   background-color: #fce4e4;
   color: #c0392b;
   padding: 0.75rem 1rem;
-  border-radius: 6px;
+  border-radius: 8px;
   margin-bottom: 1rem;
   width: 100%;
   max-width: 400px;
   text-align: center;
+  font-weight: 500;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
+
+.hidden {
+  display: none;
+}
+
 
 /* Responsive */
 @media (max-width: 500px) {
