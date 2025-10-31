@@ -1,0 +1,50 @@
+version: "3.9"
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: vocab-backend
+    ports:
+      - "3000:3000"
+    environment:
+      - DB_HOST=host.docker.internal
+      - DB_USER=root
+      - DB_PASSWORD=test
+      - DB_NAME=dictionaryDB
+      - DB_PORT=3306
+      - NODE_ENV=production
+      - DB_SSL=false
+    networks:
+      - app-network
+
+  user-frontend:
+    build:
+      context: .                    # 👈 root context
+      dockerfile: ./frontend/user/Dockerfile
+    ports:
+      - "4000:4000"
+    depends_on:
+      - backend
+    networks:
+      - app-network
+    environment:
+      - NODE_ENV=production
+
+  admin-frontend:
+    build:
+      context: .                    # 👈 root context
+      dockerfile: ./frontend/administrator/Dockerfile
+    ports:
+      - "5000:5000"
+    depends_on:
+      - backend
+    networks:
+      - app-network
+    environment:
+      - NODE_ENV=production
+
+networks:
+  app-network:
+    driver: bridge

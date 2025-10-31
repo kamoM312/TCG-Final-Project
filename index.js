@@ -2,13 +2,15 @@ import express from "express";
 import bodyParser from "body-parser";
 import { GoogleGenAI, Type } from "@google/genai";
 import dotenv from 'dotenv';
-import dbPool from './db.js'; // Import the connection pool
+import connection from './db.js'; // Import the connection pool
 import { v4 as uuidv4, parse as uuidParse } from 'uuid';
     import bcrypt from 'bcrypt';
+import mysql from 'mysql2/promise'
 
 const PORT = 3000;
 const saltRounds = 10;
 const app = express();
+// const connection = await mysql.createConnection(dbPool);
 
 app.use(bodyParser.json());
 
@@ -74,7 +76,7 @@ app.get("/favicon.ico", (req, res) => res.status(204).end());
   }
 
         try {
-    const [rows] = await dbPool.query(`SELECT id FROM Users WHERE email = ?`, [email]);
+    const [rows] = await connection.query(`SELECT id FROM Users WHERE email = ?`, [email]);
 
     if (rows.length > 0) {
       return res.status(400).json({ message: "Email is already in use!" });
@@ -85,7 +87,7 @@ app.get("/favicon.ico", (req, res) => res.status(204).end());
     const newUuid = uuidv4();
         const uuidBuffer = Buffer.from(uuidParse(newUuid));
 
-    await dbPool.query(
+    await connection.query(
       `INSERT INTO Users (full_name, email, password, uid) VALUES (?, ?, ?, ?)`,
       [full_name, email, hPassword, uuidBuffer]
     );
@@ -101,6 +103,7 @@ app.get("/favicon.ico", (req, res) => res.status(204).end());
   app.post('/login', async (req, res) => {
         const {email, password} = req.body.data; 
         let user = "";
+        console.log(email)
 
          if (!email || email.trim().length === 0) {
     return res.status(400).json({ message: "Email cannot be empty!" });
@@ -113,7 +116,7 @@ app.get("/favicon.ico", (req, res) => res.status(204).end());
         const hashed = await hashPassword(password);
 
         try {
-            const result = await dbPool.query(`SELECT BIN_TO_UUID(uid) AS uid, password FROM Users WHERE email = '${email}';`);
+            const result = await connection.query(`SELECT BIN_TO_UUID(uid) AS uid, password FROM Users WHERE email = '${email}';`);
 
             if(!result[0][0]) {
               return res.status(400).json({message: "Email does not exist"})
@@ -167,7 +170,7 @@ app.get("/favicon.ico", (req, res) => res.status(204).end());
   }
 
         try {
-    const [rows] = await dbPool.query(`SELECT id FROM admins WHERE email = ?`, [email]);
+    const [rows] = await connection.query(`SELECT id FROM admins WHERE email = ?`, [email]);
 
     if (rows.length > 0) {
       return res.status(400).json({ message: "Email is already in use!" });
@@ -178,7 +181,7 @@ app.get("/favicon.ico", (req, res) => res.status(204).end());
     const newUuid = uuidv4();
         const uuidBuffer = Buffer.from(uuidParse(newUuid));
 
-    await dbPool.query(
+    await connection.query(
       `INSERT INTO admins (full_name, email, password, uid) VALUES (?, ?, ?, ?)`,
       [full_name, email, hPassword, uuidBuffer]
     );
@@ -206,7 +209,7 @@ app.post('/admin/login', async (req, res) => {
         const hashed = await hashPassword(password);
 
         try {
-            const result = await dbPool.query(`SELECT BIN_TO_UUID(uid) AS uid, password FROM admins WHERE email = '${email}';`);
+            const result = await connection.query(`SELECT BIN_TO_UUID(uid) AS uid, password FROM admins WHERE email = '${email}';`);
             console.log(result)
             const user = result[0][0].uid;
             const dbPassword = result[0][0].password;
@@ -231,7 +234,7 @@ app.post('/admin/login', async (req, res) => {
     // view word bank
     app.get(`/:uid/wordbank`, async (req, res) => {
       try {
-        const [results] = await dbPool.query(`SELECT * FROM Wordbank;`);
+        const [results] = await connection.query(`SELECT * FROM Wordbank;`);
         res.json(results);
       } catch(error) {
         console.error('Error retrieving wordbank:', error);
@@ -246,7 +249,7 @@ app.post('/admin/login', async (req, res) => {
 
   try {
 
-    const [userRows] = await dbPool.query(
+    const [userRows] = await connection.query(
       `SELECT id FROM Users WHERE uid = UUID_TO_BIN(?);`,
       [uid]
     );
@@ -258,7 +261,7 @@ app.post('/admin/login', async (req, res) => {
     const userId = userRows[0].id;
     console.log("user id: "+userId);
 
-    const [wordRows] = await dbPool.query(
+    const [wordRows] = await connection.query(
       `SELECT Wordbank.* 
        FROM Wordbank 
        JOIN user_wordbank 
@@ -282,12 +285,12 @@ app.post('/admin/login', async (req, res) => {
       const { word, definition, pronunciation, example } = req.body;
 
       try {
-        await dbPool.query(`INSERT INTO Wordbank (word, definition, pronunciation, example) VALUES (?,?,?,?) ON DUPLICATE KEY UPDATE id=LAST_INSERT_ID(id);`,
+        await connection.query(`INSERT INTO Wordbank (word, definition, pronunciation, example) VALUES (?,?,?,?) ON DUPLICATE KEY UPDATE id=LAST_INSERT_ID(id);`,
           [word, definition, pronunciation, example]
         );
 
         // get user id 
-        const [rows] = await dbPool.query(`SELECT id FROM Users WHERE uid = UUID_TO_BIN(?);`,
+        const [rows] = await connection.query(`SELECT id FROM Users WHERE uid = UUID_TO_BIN(?);`,
           [uid] 
         );
         
@@ -297,7 +300,7 @@ app.post('/admin/login', async (req, res) => {
     const userId = rows[0].id;
     console.log(`id: ${userId}`);
 
-        await dbPool.query(`INSERT INTO user_wordbank (user_id, wordbank_id) VALUES (?, LAST_INSERT_ID());`,
+        await connection.query(`INSERT INTO user_wordbank (user_id, wordbank_id) VALUES (?, LAST_INSERT_ID());`,
           [userId]
         );
         res.status(200).send("Success");
@@ -316,7 +319,7 @@ app.post('/admin/login', async (req, res) => {
   console.log("uid: "+uid);
   console.log("word id: "+wordId)
 
-  const conn = await dbPool.getConnection(); // mysql2/promise
+  const conn = await connection.getConnection(); // mysql2/promise
   try {
     await conn.beginTransaction();
 
@@ -350,7 +353,7 @@ app.post('/admin/login', async (req, res) => {
     app.post("/:uid/clear", async (req, res) => {
   const uid = req.params.uid;
 
-  const conn = await dbPool.getConnection(); // mysql2/promise
+  const conn = await connection.getConnection(); // mysql2/promise
   try {
     await conn.beginTransaction();
 
@@ -381,7 +384,7 @@ app.post('/admin/login', async (req, res) => {
     app.post("/:uid/delete", async (req, res) => {
   const uid = req.params.uid;
 
-  const conn = await dbPool.getConnection(); // assumes mysql2/promise
+  const conn = await connection.getConnection(); // assumes mysql2/promise
   try {
     await conn.beginTransaction();
 
@@ -479,7 +482,7 @@ app.get("/:uid/random", async (req, res) => {
     app.get(`/admin/:uid/users`, async (req, res) => {
       try {
       // const users = await db.query(`SELECT BIN_TO_UUID(uid) AS uid, full_name, email FROM Users`);
-      const [rows] = await dbPool.query(`SELECT BIN_TO_UUID(uid) AS uid, full_name, email FROM Users`);
+      const [rows] = await connection.query(`SELECT BIN_TO_UUID(uid) AS uid, full_name, email FROM Users`);
       console.log(rows);
       res.json(rows);
       } catch (error) {
@@ -492,7 +495,7 @@ app.get("/:uid/random", async (req, res) => {
     app.get(`/admin/:uid/user`, async (req, res) => {
       const userUid = req.body.userUid;
       try {
-      const [rows] = await dbPool.query(`SELECT BIN_TO_UUID(uid) AS uid, full_name, email FROM Users WHERE uid=${userUid};`
+      const [rows] = await connection.query(`SELECT BIN_TO_UUID(uid) AS uid, full_name, email FROM Users WHERE uid=${userUid};`
       );
       console.log(rows);
       res.json(rows);
@@ -506,7 +509,7 @@ app.get("/:uid/random", async (req, res) => {
     app.post(`/admin/:uid/deleteUser`, async (req, res) => {
       const userUid = req.body.userUid;
       try {
-      await dbPool.query(`DELETE FROM Users WHERE uid = UUID_TO_BIN(?);`,
+      await connection.query(`DELETE FROM Users WHERE uid = UUID_TO_BIN(?);`,
         [userUid]
       );
       res.status(200).send('Succesfully deleted user.');
@@ -519,7 +522,7 @@ app.get("/:uid/random", async (req, res) => {
      // remove all users
     app.post(`/admin/:uid/deleteUsers`, async (req, res) => {
       try {
-      await dbPool.query(`DELETE FROM Users;`
+      await connection.query(`DELETE FROM Users;`
       );
       res.status(200).send('Succesfully deleted all users.');
     } catch (error) {
@@ -531,8 +534,8 @@ app.get("/:uid/random", async (req, res) => {
     // clear word bank
     app.post('/admin/:uid/deleteWordbank', async (req, res) => {
       try {
-        await dbPool.query(`DELETE FROM Wordbank;`);
-        await dbPool.query(`DELETE FROM user_wordbank`);
+        await connection.query(`DELETE FROM Wordbank;`);
+        await connection.query(`DELETE FROM user_wordbank`);
         res.status(200).send('Successfully deleted wordbank.');
       } catch (error) {
         console.error(`Error clearing wordbank`, error.message);
